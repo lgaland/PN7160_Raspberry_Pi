@@ -22,13 +22,13 @@
 
 #include <linux/cdev.h>
 
-#if IS_ENABLED(CONFIG_NXP_NFC_I2C)
-#include "i2c_drv.h"
-#endif //IS_ENABLED(CONFIG_NXP_NFC_I2C)
+#if IS_ENABLED(CONFIG_NFC_PN71XX_I2C)
+#include "i2c.h"
+#endif //IS_ENABLED(CONFIG_NFC_PN71XX_I2C)
 
-#if IS_ENABLED(CONFIG_NXP_NFC_SPI)
-#include "spi_drv.h"
-#endif //IS_ENABLED(CONFIG_NXP_NFC_SPI)
+#if IS_ENABLED(CONFIG_NFC_PN71XX_SPI)
+#include "spi.h"
+#endif //IS_ENABLED(CONFIG_NFC_PN71XX_SPI)
 
 /* Max device count for this driver */
 #define DEV_COUNT			1
@@ -36,7 +36,7 @@
 #define CLASS_NAME			"nfc"
 
 /* NFC character device name, this will be in /dev/ */
-#define NFC_CHAR_DEV_NAME		"nxpnfc"
+#define NFC_CHAR_DEV_NAME		"pn71xx"
 
 /* NCI packet details */
 #define NCI_CMD				(0x20)
@@ -84,9 +84,9 @@
 #define ESE_SET_PWR			_IOW(NFC_MAGIC, 0x02, long)
 #define ESE_GET_PWR			_IOR(NFC_MAGIC, 0x03, long)
 
-#define DTS_IRQ_GPIO_STR		"nxp,nxpnfc-irq"
-#define DTS_VEN_GPIO_STR		"nxp,nxpnfc-ven"
-#define DTS_FWDN_GPIO_STR		"nxp,nxpnfc-fw-dwnld"
+#define DTS_IRQ_GPIO_STR		"pn71xx-irq"
+#define DTS_VEN_GPIO_STR		"pn71xx-ven"
+#define DTS_FWDN_GPIO_STR		"pn71xx-dwl"
 
 enum nfcc_ioctl_request {
 	/* NFC disable request with VEN LOW */
@@ -174,12 +174,12 @@ struct nfc_dev {
 	/* NFC VEN pin state */
 	bool nfc_ven_enabled;
 	union {
-	#if IS_ENABLED(CONFIG_NXP_NFC_I2C)
+	#if IS_ENABLED(CONFIG_NFC_PN71XX_I2C)
 		struct i2c_dev i2c_dev;
-	#endif //IS_ENABLED(CONFIG_NXP_NFC_I2C)
-	#if IS_ENABLED(CONFIG_NXP_NFC_SPI)
+	#endif //IS_ENABLED(CONFIG_NFC_PN71XX_I2C)
+	#if IS_ENABLED(CONFIG_NFC_PN71XX_SPI)
 		struct spi_dev spi_dev;
-	#endif //IS_ENABLED(CONFIG_NXP_NFC_SPI)
+	#endif //IS_ENABLED(CONFIG_NFC_PN71XX_SPI)
 	};
 	struct platform_configs configs;
 

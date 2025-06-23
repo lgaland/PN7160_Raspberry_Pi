@@ -10,24 +10,24 @@ This project aims to interface NXP's NCI-based NFC controller PN7160 with a Rasp
 
 ## 🧰 Hardware Setup
 
-- Raspberry Pi 4B (BCM2711, HW revision c03111)  
+- Raspberry Pi 5 Model B Rev 1.1 (BCM2712, HW revision d04171)  
 - NXP PN7160 I2C Development Board: OM27160A1HN  
 - NXP Raspberry Pi Interface Board: OM29110RPI-B  
 - NFC Forum–compliant NFC tag
 
 <figure style="text-align: center;">
   <img src="https://raw.githubusercontent.com/lgaland/PN7160_Raspberry_Pi/refs/heads/main/assets/pi.png" width="300">
-  <figcaption>Hardware setup: Raspberry Pi 4B + OM29110RPI-B + OM27160A1HN</figcaption>
+  <figcaption>Hardware setup: Raspberry Pi 5 + OM29110RPI-B + OM27160A1HN</figcaption>
 </figure>
 
-> **Note:** The host used here is a Raspberry Pi 4B, but the code can be easily adapted for other platforms.
+> **Note:** The host used here is a Raspberry Pi 5, but the code can be easily adapted for other platforms.
 
 ---
 
 ## 💻 Software Setup
 
 - **OS**: Raspberry Pi OS (Debian GNU/Linux 12) - 64-bit
-- **Kernel**: Version 6.12.22-v8  
+- **Kernel**: Version 6.12.33-v8-16k+  
 
 Open a shell on the Pi and clone the repository:
 
@@ -39,7 +39,7 @@ git clone https://github.com/lgaland/PN7160_Raspberry_Pi.git
 
 ## 🔧 Step 1: Install the PN7160 I2C Kernel Driver
 
-NXP’s Linux NFC stack interfaces with the PN7160 via the `nxpnfc` kernel driver.
+NXP’s Linux NFC stack interfaces with the PN7160 via an I2C kernel driver.
 
 Clone the Raspberry Pi Linux kernel sources:
 
@@ -47,10 +47,10 @@ Clone the Raspberry Pi Linux kernel sources:
 git clone --depth=1 https://github.com/raspberrypi/linux.git -b rpi-6.12
 ```
 
-Copy the `nxpnfc` I2C kernel driver sources to the appropriate directory:
+Copy the `pn71xx` I2C kernel driver sources to the appropriate directory:
 
 ```bash
-cp -r ./PN7160_Raspberry_Pi/nxpnfc ./linux/drivers/nfc
+cp -r ./PN7160_Raspberry_Pi/pn71xx ./linux/drivers/nfc
 ```
 
 Edit the build system:
@@ -58,13 +58,13 @@ Edit the build system:
 - In `./linux/drivers/nfc/Kconfig`, add before `endmenu`:
 
   ```bash
-  source "drivers/nfc/nxpnfc/Kconfig"
+  source "drivers/nfc/pn71xx/Kconfig"
   ```
 
 - In `./linux/drivers/nfc/Makefile`, add:
 
   ```bash
-  obj-y += nxpnfc/
+  obj-y += pn71xx/
   ```
 
 ### 🧱 Build the Kernel
@@ -79,8 +79,8 @@ sudo apt install bc bison flex libssl-dev make
 
 ```bash
 cd linux
-KERNEL=kernel8
-make bcm2711_defconfig
+KERNEL=kernel_2712
+make bcm2712_defconfig
 make menuconfig
 ```
 
@@ -95,7 +95,7 @@ Networking support
 Enable:
 
 ```
-<NFC I2C Slave driver for NXP-NFCC>
+<NFC PN71XX device support (I2C)>
 ```
 
 Save and exit menuconfig.
@@ -107,7 +107,7 @@ Then to build and install the kernel, in `./linux` create a bash script named `r
 
 set -e
 
-KERNEL=kernel8
+KERNEL=kernel_2712
 
 # Rebuild Linux kernel
 make -j6 Image.gz modules dtbs
@@ -129,7 +129,7 @@ Now execute it:
 ./rebuild.sh
 ```
 
-> ⚠️ Kernel compilation may take several hours on the Raspberry Pi.
+> ⚠️ Kernel compilation may take some time on the Raspberry Pi.
 
 ---
 
@@ -157,13 +157,13 @@ Compile the overlay:
 
 ```bash
 cd ../PN7160_Raspberry_Pi/dts
-dtc -I dts -O dtb -o i2c1-nxpnfc.dtbo i2c1-nxpnfc.dts
+dtc -I dts -O dtb -o i2c1-pn71xxa.dtbo i2c1-pn71xxa.dts
 ```
 
 Copy the blob to the overlays directory:
 
 ```bash
-sudo cp i2c1-nxpnfc.dtbo /boot/firmware/overlays/
+sudo cp i2c1-pn71xxa.dtbo /boot/firmware/overlays/
 ```
 
 ### 🔧 Enable the Overlay
@@ -171,10 +171,10 @@ sudo cp i2c1-nxpnfc.dtbo /boot/firmware/overlays/
 Edit `/boot/firmware/config.txt` and append under `[all]`:
 
 ```ini
-dtoverlay=i2c1-nxpnfc
+dtoverlay=i2c1-pn71xxa
 ```
 
-Also ensure this line is uncommented:
+Also ensure this line is not commented:
 
 ```ini
 dtparam=i2c_arm=on
@@ -182,12 +182,12 @@ dtparam=i2c_arm=on
 
 ### 🔐 Device Node Permissions
 
-By default, the `/dev/nxpnfc` node is only accessible to root. You can change this using a `udev` rule:
+By default, the `/dev/pn71xx` node is only accessible to root. You can change this using a `udev` rule:
 
-Create `/etc/udev/rules.d/nxpnfc.rules` with:
+Create `/etc/udev/rules.d/pn71xx.rules` an append this line:
 
 ```bash
-ACTION=="add", KERNEL=="nxpnfc", MODE="0666"
+ACTION=="add", KERNEL=="pn71xx", MODE="0666"
 ```
 
 Reboot:
@@ -207,14 +207,14 @@ dmesg | grep -i nfc
 Expected output:
 
 ```
-[    5.362506] nfc_i2c_dev_init: Loading NXP NFC I2C driver
-[    5.362615] nfc_parse_dt: irq 535
-[    5.362628] nfc_parse_dt: 535, 536, 537
-[    5.363117] nfc_i2c_dev_probe: requesting IRQ 59
-[    5.393520] nfc_i2c_dev_probe: probing nfc i2c successfully
+[    2.811942] nfc: nfc_i2c_dev_init: Loading NXP NFC I2C driver
+[    2.812010] nfc: nfc_parse_dt: irq 592
+[    2.812015] nfc: nfc_parse_dt: 592, 593, 594
+[    2.812153] nfc: nfc_i2c_dev_probe: requesting IRQ 186
+[    2.842502] nfc: nfc_i2c_dev_probe: probing nfc i2c successfully
 ```
 
-If you see something like the above—congratulations! The hardware is now correctly interfaced.
+If you see something like the above—congratulations! The hardware is now correctly interfaced and the correponding device file is `/dev/pn71xx`.
 
 ---
 

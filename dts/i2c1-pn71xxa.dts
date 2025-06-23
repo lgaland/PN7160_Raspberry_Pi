@@ -1,0 +1,25 @@
+/dts-v1/;
+/plugin/;
+
+/{
+    compatible = "brcm,bcm2712";
+
+    fragment@0 {
+        target = <&i2c1>;
+        __overlay__ {
+	    #address-cells = <1>;
+	    #size-cells = <0>;	    
+	    status = "okay";
+
+            pn71xx@28 {
+                compatible = "nxp,pn71xxa";
+                reg = <0x28>;
+
+                pn71xx-irq = <&gpio 23 0>;
+                pn71xx-ven = <&gpio 24 1>;
+                pn71xx-dwl = <&gpio 25 1>;
+            };
+        };
+    };
+};
+

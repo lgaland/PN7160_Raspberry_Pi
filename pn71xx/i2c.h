@@ -17,14 +17,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  ******************************************************************************/
-#ifndef _I2C_DRV_H_
-#define _I2C_DRV_H_
+#ifndef _I2C_H_
+#define _I2C_H_
 
 #include <linux/i2c.h>
 
 /* kept same as dts */
-#define NFC_I2C_DRV_STR			"nxp,nxpnfc"
-#define NFC_I2C_DEV_ID			"nxpnfc"
+#define NFC_I2C_DRV_STR			"nxp,pn71xxa"
+#define NFC_I2C_DEV_ID			"pn71xxa"
 
 /* Interface specific parameters */
 struct i2c_dev {
@@ -41,4 +41,4 @@ int nfc_i2c_dev_probe(struct i2c_client *client);
 void nfc_i2c_dev_remove(struct i2c_client *client);
 int nfc_i2c_dev_suspend(struct device *device);
 int nfc_i2c_dev_resume(struct device *device);
-#endif /* _I2C_DRV_H_ */
+#endif /* _I2C_H_ */

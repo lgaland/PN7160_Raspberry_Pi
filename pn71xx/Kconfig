@@ -1,0 +1,23 @@
+#
+# Near Field Communication configuration
+#
+
+config NFC_PN71XX_I2C
+	tristate "NFC PN71XX device support (I2C)"
+	depends on I2C
+	help
+	  This enables the NFC I2C driver for PN71xxA devices.
+	  NCI protocol logic resides in the usermode and it has 
+	  no other NFC dependencies.
+
+	  If unsure, say N.
+
+config NXP_NFC_RECOVERY
+	bool "NXP based NFC minimal FW update support"
+	depends on NFC_PN71XX_I2C && I2C
+        default y
+	help
+	  This enables NFC minimal FW update.
+
+	  If unsure, say N.
+
